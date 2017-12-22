@@ -1,0 +1,72 @@
+version: '3'
+
+networks:
+  frontend:
+  prometheus:
+
+volumes:
+  prometheus-data:
+
+services:
+  cadvisor:
+    image: 'google/cadvisor:v0.28.3'
+    volumes:
+      - '/:/rootfs:ro'
+      - '/var/run:/var/run:rw'
+      - '/sys:/sys:ro'
+      - '/var/lib/docker:/var/lib/docker:ro'
+      - '/dev/disk:/dev/disk:ro'
+    privileged: true
+    networks:
+      - 'prometheus'
+    expose:
+      - '8080'
+
+  # Note: 'node_exporter' is not supposed to be run inside a container, or it
+  # should be executed in the host's PID and NET namespaces, which is a bit
+  # tedious in docker-compose (because then Prometheus can't access the service
+  # and such).
+  # So, this is just a demo, and the gathered stats will be merely nonsense.
+  node_exporter:
+    image: 'quay.io/prometheus/node-exporter:v0.15.2'
+    networks:
+      - 'prometheus'
+    expose:
+      - '9100'
+
+  prometheus:
+    build: prometheus
+    networks:
+      - 'prometheus'
+    expose:
+      - '9090'
+    volumes:
+      - 'prometheus-data:/prometheus'
+
+  grafana:
+    build: grafana
+    networks:
+      - 'prometheus'
+      - 'frontend'
+    expose:
+      - '3000'
+    labels:
+      - "traefik.enable=true"
+      - "traefik.frontend.rule=Host:grafana.localtest.me"
+      - "traefik.docker.network=meteringstack_frontend"
+
+  traefik:
+    image: traefik:v1.4.5-alpine
+    command: --accesslog --web --web.metrics --web.metrics.prometheus --docker --docker.exposedbydefault=false --loglevel=INFO
+    privileged: true
+    networks:
+      - 'frontend'
+      - 'prometheus'
+    expose:
+      - '8080'
+    ports:
+      - '127.0.0.1:80:80'
+      - '127.0.0.1:8080:8080'
+    volumes:
+      - '/var/run/docker.sock:/var/run/docker.sock'
+      - '/dev/null:/traefik.toml'
