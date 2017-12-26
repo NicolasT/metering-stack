@@ -70,3 +70,15 @@ services:
     volumes:
       - '/var/run/docker.sock:/var/run/docker.sock'
       - '/dev/null:/traefik.toml'
+
+  app:
+    build: app
+    networks:
+      - 'frontend'
+      - 'prometheus'
+    expose:
+      - '3000'
+    labels:
+      - "traefik.enable=true"
+      - "traefik.frontend.rule=Host:localtest.me"
+      - "traefik.docker.network=meteringstack_frontend"

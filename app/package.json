@@ -1,0 +1,17 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.16.2",
+    "morgan": "^1.9.0",
+    "on-finished": "^2.3.0",
+    "prom-client": "^10.2.2",
+    "url": "^0.11.0"
+  }
+}
